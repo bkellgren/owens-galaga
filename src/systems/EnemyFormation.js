@@ -342,13 +342,14 @@ export class EnemyFormation {
         );
         if (available.length === 0) return;
 
-        // Classic Galaga style: usually 1 diver, occasionally 2 at higher levels
-        // Never more than 2 at once to keep it manageable
+        // Classic Galaga style: most enemies do strafing fly-downs (shooting but
+        // NOT aiming to collide). True dive-bombs are rare — only swoopers do
+        // kamikaze dives regularly; other types occasionally at higher levels.
         const alreadyDiving = this.formationEnemies.filter(
             e => e.active && e.getData('diving')
         ).length;
 
-        // Cap total divers at 2 (3 on hard at very high levels)
+        // Cap total active divers
         const maxDivers = this.scene.level >= 15 ? 3 : 2;
         if (alreadyDiving >= maxDivers) return;
 
@@ -377,7 +378,7 @@ export class EnemyFormation {
         const type = enemy.getData('type');
 
         if (type === 'swooper') {
-            // Erratic swooping dive
+            // Swoopers are the aggressive dive-bombers — erratic path aimed AT the player
             const midX = Phaser.Math.Between(40, GAME_WIDTH - 40);
             const midY = GAME_HEIGHT * 0.5;
 
@@ -423,20 +424,98 @@ export class EnemyFormation {
             // Elite tractor beam dive — hovers above player and deploys beam
             this.eliteTractorDive(enemy, playerX);
         } else {
-            // Standard dive toward player
-            const targetX = Phaser.Math.Clamp(playerX + Phaser.Math.Between(-30, 30), 20, GAME_WIDTH - 20);
-            this.scene.tweens.add({
-                targets: enemy,
-                x: targetX,
-                y: GAME_HEIGHT + 40,
-                duration: 1500 / (speed / 100),
-                ease: 'Quad.easeIn',
-                onComplete: () => this.returnToFormation(enemy),
-            });
+            // --- Classic Galaga strafing fly-down ---
+            // Most enemies fly down in a looping/arcing path NEAR the player while
+            // shooting, then loop back up to formation. They do NOT aim to collide.
+            // Only at higher levels is there a small chance of a true dive-bomb.
+
+            const doDiveBomb = type === 'tank'
+                ? false  // Tanks never dive-bomb — too slow, they just strafe
+                : this.scene.level >= 8 && Math.random() < 0.15; // ~15% chance after level 8
+
+            if (doDiveBomb) {
+                // Rare dive-bomb — straight at the player (original behavior)
+                const targetX = Phaser.Math.Clamp(playerX + Phaser.Math.Between(-30, 30), 20, GAME_WIDTH - 20);
+                this.scene.tweens.add({
+                    targets: enemy,
+                    x: targetX,
+                    y: GAME_HEIGHT + 40,
+                    duration: 1500 / (speed / 100),
+                    ease: 'Quad.easeIn',
+                    onComplete: () => this.returnToFormation(enemy),
+                });
+            } else {
+                // Normal strafing fly-down — fly down one side shooting, loop back up
+                // Pick a lateral path that doesn't aim directly at the player
+                const startSide = enemy.x < GAME_WIDTH / 2 ? 'left' : 'right';
+                const offsetDir = startSide === 'left' ? 1 : -1;
+
+                // Waypoint 1: Fly to mid-screen, offset to the side
+                const wp1X = Phaser.Math.Clamp(
+                    enemy.x + offsetDir * Phaser.Math.Between(40, 100),
+                    30, GAME_WIDTH - 30
+                );
+                const wp1Y = GAME_HEIGHT * Phaser.Math.FloatBetween(0.35, 0.5);
+
+                // Waypoint 2: Continue downward with a lateral sweep
+                const wp2X = Phaser.Math.Clamp(
+                    wp1X + offsetDir * Phaser.Math.Between(20, 80),
+                    30, GAME_WIDTH - 30
+                );
+                const wp2Y = GAME_HEIGHT * Phaser.Math.FloatBetween(0.6, 0.75);
+
+                const segDuration = 900 / (speed / 100);
+
+                // Segment 1: Arc down to mid-screen
+                this.scene.tweens.add({
+                    targets: enemy,
+                    x: wp1X,
+                    y: wp1Y,
+                    duration: segDuration,
+                    ease: 'Sine.easeInOut',
+                    onComplete: () => {
+                        if (!enemy.active) return;
+                        // Fire a shot as they pass through mid-screen
+                        this.enemyFire(enemy);
+
+                        // Segment 2: Continue sweeping down
+                        this.scene.tweens.add({
+                            targets: enemy,
+                            x: wp2X,
+                            y: wp2Y,
+                            duration: segDuration * 0.8,
+                            ease: 'Sine.easeInOut',
+                            onComplete: () => {
+                                if (!enemy.active) return;
+                                // Fire again near bottom of run
+                                this.enemyFire(enemy);
+
+                                // Segment 3: Loop off-screen and return to formation
+                                const exitX = wp2X + offsetDir * 40;
+                                this.scene.tweens.add({
+                                    targets: enemy,
+                                    x: Phaser.Math.Clamp(exitX, -20, GAME_WIDTH + 20),
+                                    y: GAME_HEIGHT + 40,
+                                    duration: segDuration * 0.6,
+                                    ease: 'Quad.easeIn',
+                                    onComplete: () => this.returnToFormation(enemy),
+                                });
+                            }
+                        });
+                    }
+                });
+            }
         }
 
-        // Fire during dive (bombers drop zones, elites doing tractor don't fire)
-        if (type !== 'bomber' && !(type === 'elite' && enemy.getData('tractorActive'))) {
+        // Fire during dive for swooper/elite types (bombers drop zones instead,
+        // elites doing tractor don't fire, strafing enemies fire during their path above)
+        if (type === 'swooper') {
+            this.scene.time.delayedCall(300, () => {
+                if (enemy.active && enemy.getData('diving')) {
+                    this.enemyFire(enemy);
+                }
+            });
+        } else if (type === 'elite' && !enemy.getData('tractorActive')) {
             this.scene.time.delayedCall(300, () => {
                 if (enemy.active && enemy.getData('diving')) {
                     this.enemyFire(enemy);

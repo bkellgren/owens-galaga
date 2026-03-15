@@ -105,28 +105,33 @@ export class GameOverScene extends Phaser.Scene {
         }).setOrigin(0.5);
 
         const stats = [
-            { label: 'ENEMIES DESTROYED', value: this.totalKills, color: '#ff8844' },
+            { label: 'ENEMIES DESTROYED', value: `${this.totalKills}`, color: '#ff8844' },
             { label: 'ACCURACY', value: `${accuracy}%`, color: '#44ff44' },
             { label: 'HIGHEST COMBO', value: `x${this.maxCombo}`, color: '#ffff00' },
             { label: 'TIME SURVIVED', value: timeStr, color: '#8888ff' },
         ];
 
-        stats.forEach((stat, i) => {
-            const y = 258 + i * 28;
+        const startY = 262;
+        const rowHeight = 36;
+        const labelX = GAME_WIDTH / 2 - 20;
+        const valueX = GAME_WIDTH / 2 + 20;
 
-            const label = this.add.text(GAME_WIDTH / 2 - 10, y, stat.label, {
+        stats.forEach((stat, i) => {
+            const y = startY + i * rowHeight;
+
+            const label = this.add.text(labelX, y, stat.label, {
                 fontFamily: 'monospace', fontSize: '11px', color: '#888888',
             }).setOrigin(1, 0.5).setAlpha(0);
 
-            const value = this.add.text(GAME_WIDTH / 2 + 10, y, `${stat.value}`, {
-                fontFamily: 'monospace', fontSize: '13px', color: stat.color,
+            const value = this.add.text(valueX, y, stat.value, {
+                fontFamily: 'monospace', fontSize: '14px', color: stat.color,
             }).setOrigin(0, 0.5).setAlpha(0);
 
-            // Staggered reveal animation
+            // Staggered reveal — labels slide in from left, values from right
             this.tweens.add({
-                targets: [label, value],
+                targets: label,
                 alpha: 1,
-                x: { from: label.x + (label === label ? -20 : 20), to: label.x },
+                x: { from: labelX - 20, to: labelX },
                 duration: 400,
                 delay: 300 + i * 200,
                 ease: 'Back.easeOut',
@@ -134,6 +139,7 @@ export class GameOverScene extends Phaser.Scene {
             this.tweens.add({
                 targets: value,
                 alpha: 1,
+                x: { from: valueX + 20, to: valueX },
                 duration: 400,
                 delay: 300 + i * 200,
                 ease: 'Back.easeOut',
@@ -146,18 +152,18 @@ export class GameOverScene extends Phaser.Scene {
             const scores = JSON.parse(localStorage.getItem('owens_galaga_scores') || '{}');
             const diffScores = scores[this.difficulty]?.scores || [];
 
-            this.add.text(GAME_WIDTH / 2, 380, '— HIGH SCORES —', {
+            this.add.text(GAME_WIDTH / 2, 420, '— HIGH SCORES —', {
                 fontFamily: 'monospace', fontSize: '16px', color: '#00ffff',
             }).setOrigin(0.5);
 
             if (diffScores.length === 0) {
-                this.add.text(GAME_WIDTH / 2, 420, 'No scores yet', {
+                this.add.text(GAME_WIDTH / 2, 460, 'No scores yet', {
                     fontFamily: 'monospace', fontSize: '12px', color: '#666666',
                 }).setOrigin(0.5);
             } else {
                 diffScores.slice(0, 5).forEach((entry, i) => {
                     const isNew = entry.score === this.finalScore;
-                    this.add.text(GAME_WIDTH / 2, 410 + i * 28,
+                    this.add.text(GAME_WIDTH / 2, 450 + i * 28,
                         `${i + 1}. ${entry.score.toLocaleString().padStart(10)} LVL ${entry.level}`, {
                         fontFamily: 'monospace',
                         fontSize: '13px',

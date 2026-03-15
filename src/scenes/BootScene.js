@@ -481,35 +481,32 @@ export class BootScene extends Phaser.Scene {
         const s = 24;
         const cx = s / 2, cy = s / 2, r = s / 2 - 1;
 
-        // Top half — red
+        // Step 1: Draw the full red circle (top half color)
         g.fillStyle(0xff0000, 1);
         g.fillCircle(cx, cy, r);
-        // Bottom half — white (draw over bottom)
-        g.fillStyle(0xffffff, 1);
-        g.fillRect(0, cy, s, cy + 1);
-        // Re-round the bottom
-        g.fillStyle(0xffffff, 1);
-        g.fillCircle(cx, cy, r);
-        // Actually let's do this properly with arcs
-        g.clear();
 
-        // Full red circle
-        g.fillStyle(0xff0000, 1);
-        g.fillCircle(cx, cy, r);
-        // White bottom half
+        // Step 2: Mask the bottom half white using a clipped semicircle
+        // Draw a white circle the same size, but only the bottom shows because
+        // we overlay it after filling a white rect clipped to lower half
         g.fillStyle(0xffffff, 1);
-        g.fillRect(1, cy, s - 2, cy);
-        // Clean up bottom corners with the circle
-        g.fillStyle(0x000000, 0);
-        // Black dividing line
+        // Fill bottom-half pixels row by row within the circle
+        for (let py = cy; py <= cy + r; py++) {
+            const dy = py - cy;
+            const halfWidth = Math.sqrt(r * r - dy * dy);
+            g.fillRect(cx - halfWidth, py, halfWidth * 2, 1);
+        }
+
+        // Step 3: Black dividing band across the middle
         g.fillStyle(0x222222, 1);
-        g.fillRect(1, cy - 1, s - 2, 3);
-        // Center button
+        g.fillRect(cx - r, cy - 1, r * 2, 3);
+
+        // Step 4: Center button — white circle with dark ring
         g.fillStyle(0xffffff, 1);
         g.fillCircle(cx, cy, 4);
         g.lineStyle(2, 0x222222, 1);
         g.strokeCircle(cx, cy, 4);
-        // Outer border
+
+        // Step 5: Outer border
         g.lineStyle(1.5, 0x222222, 1);
         g.strokeCircle(cx, cy, r);
 

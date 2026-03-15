@@ -41,10 +41,16 @@ export class HUD {
             ...style, color: '#ff4444', fontSize: '12px',
         }).setOrigin(1, 0).setDepth(80);
 
-        // Pokéballs (bottom right, above bombs)
-        this.pokeballText = scene.add.text(GAME_WIDTH - 10, GAME_HEIGHT - 40, '', {
-            ...style, color: '#ff4444', fontSize: '12px',
-        }).setOrigin(1, 0).setDepth(80);
+        // Pokéballs (bottom right, above bombs) — use sprite icons
+        this.pokeballIcons = [];
+        for (let i = 0; i < 2; i++) { // max 2 pokéballs
+            const icon = scene.add.image(
+                GAME_WIDTH - 16 - i * 22,
+                GAME_HEIGHT - 38,
+                'pokeball'
+            ).setScale(0.8).setDepth(80).setAlpha(0).setVisible(false);
+            this.pokeballIcons.push(icon);
+        }
 
         // Fullscreen button (top right corner)
         this.fullscreenBtn = scene.add.text(GAME_WIDTH - 10, 42, '⛶', {
@@ -89,9 +95,12 @@ export class HUD {
         const bombStr = '💣'.repeat(scene.bombs);
         this.bombTexts.setText(bombStr || '');
 
-        // Pokéballs
-        const pokeStr = scene.pokeballs > 0 ? '🔴'.repeat(scene.pokeballs) : '';
-        this.pokeballText.setText(pokeStr);
+        // Pokéballs — show/hide sprite icons
+        this.pokeballIcons.forEach((icon, i) => {
+            const show = i < scene.pokeballs;
+            icon.setVisible(show);
+            icon.setAlpha(show ? 0.9 : 0);
+        });
 
         // Active powerups — visual timer bars
         // Clean up old bars
