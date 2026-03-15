@@ -1,1 +1,14 @@
-[]
+[
+  {
+    "id": "9a74f17a",
+    "label": "vite-dev",
+    "command": "cd /Users/brettkellgren/Sites/owens-galaga && npm run dev",
+    "cwd": "/Users/brettkellgren/Sites/owens-galaga",
+    "startedAt": 1773577270630,
+    "processType": "server",
+    "group": null,
+    "readyPattern": null,
+    "readyPort": 5173,
+    "pid": 86953
+  }
+]

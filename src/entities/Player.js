@@ -11,6 +11,7 @@ export class Player {
         this.fireHeld = false;
         this.fireCooldown = 0;
         this.velocity = 0;
+        this.homingUpdaters = []; // Track homing update callbacks for cleanup
 
         // Ship group (for multi-ship)
         this.shipGroup = scene.physics.add.group();
@@ -287,6 +288,12 @@ export class Player {
             bullet.setTint(0xffffff);
         }
         bullet.setDepth(8);
+
+        // Heat-seeking
+        if (this.scene.activePowerups.heat_seeking) {
+            bullet.setTint(0xff6633);
+            this.setupHoming(bullet);
+        }
     }
 
     fireDual(ship, ricochet = false) {
@@ -317,6 +324,12 @@ export class Player {
                 bullet.setTint(0xffffff);
             }
             bullet.setDepth(8);
+
+            // Heat-seeking
+            if (this.scene.activePowerups.heat_seeking) {
+                bullet.setTint(0xff6633);
+                this.setupHoming(bullet);
+            }
         });
     }
 
@@ -344,6 +357,12 @@ export class Player {
                 this.setupRicochet(bullet);
             } else {
                 bullet.setTint(0xffffff);
+            }
+
+            // Heat-seeking
+            if (this.scene.activePowerups.heat_seeking) {
+                bullet.setTint(0xff6633);
+                this.setupHoming(bullet);
             }
         });
     }
@@ -390,6 +409,62 @@ export class Player {
         bullet.setActive = (value) => {
             if (!value) this.scene.events.off('update', checkBounds);
             return origSetActive(value);
+        };
+    }
+
+    setupHoming(bullet) {
+        // Heat-seeking: gently steer bullet toward nearest enemy
+        const scene = this.scene;
+        const startTime = scene.time.now;
+        const trackDuration = 2000; // max 2 seconds of tracking
+        const turnRate = 0.04;
+
+        const updateHoming = () => {
+            if (!bullet.active) {
+                scene.events.off('update', updateHoming);
+                return;
+            }
+            const elapsed = scene.time.now - startTime;
+            if (elapsed > trackDuration) {
+                scene.events.off('update', updateHoming);
+                return;
+            }
+
+            // Find nearest active enemy
+            let nearest = null;
+            let nearestDist = Infinity;
+            scene.enemies.getChildren().forEach(e => {
+                if (!e.active) return;
+                const d = Phaser.Math.Distance.Between(bullet.x, bullet.y, e.x, e.y);
+                if (d < nearestDist) {
+                    nearestDist = d;
+                    nearest = e;
+                }
+            });
+
+            if (!nearest) return; // No targets
+
+            const targetAngle = Phaser.Math.Angle.Between(bullet.x, bullet.y, nearest.x, nearest.y);
+            const currentAngle = Math.atan2(bullet.body.velocity.y, bullet.body.velocity.x);
+            const speed = Math.sqrt(
+                bullet.body.velocity.x * bullet.body.velocity.x +
+                bullet.body.velocity.y * bullet.body.velocity.y
+            );
+
+            const newAngle = currentAngle + Phaser.Math.Angle.Wrap(targetAngle - currentAngle) * turnRate;
+            bullet.body.setVelocity(
+                Math.cos(newAngle) * speed,
+                Math.sin(newAngle) * speed
+            );
+        };
+        scene.events.on('update', updateHoming);
+
+        // Clean up when deactivated
+        const origSetActive = bullet.setActive.bind(bullet);
+        const prevSetActive = bullet.setActive; // May already be wrapped by ricochet
+        bullet.setActive = (value) => {
+            if (!value) scene.events.off('update', updateHoming);
+            return prevSetActive.call(bullet, value);
         };
     }
 

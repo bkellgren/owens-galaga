@@ -34,6 +34,7 @@ export class BootScene extends Phaser.Scene {
             { label: 'POWERUPS', fn: () => { this.generatePowerups(); } },
             { label: 'EFFECTS', fn: () => { this.generateParticle(); this.generateStar(); this.generateBombBlast(); this.generateShield(); this.generateAreaDenial(); } },
             { label: 'BOSSES', fn: () => { this.generateBossBeam(); this.generateMine(); this.generateTractorBeam(); this.generateBossTextures(); } },
+            { label: 'POKEMON', fn: () => { this.generatePokeball(); this.generatePokemonSprites(); this.generatePokemonProjectiles(); } },
         ];
 
         let currentStage = 0;
@@ -473,5 +474,138 @@ export class BootScene extends Phaser.Scene {
         g5.fillCircle(55, 30, 3);
         g5.generateTexture('boss_generic', 90, 70);
         g5.destroy();
+    }
+
+    generatePokeball() {
+        const g = this.add.graphics();
+        const s = 24;
+        const cx = s / 2, cy = s / 2, r = s / 2 - 1;
+
+        // Top half — red
+        g.fillStyle(0xff0000, 1);
+        g.fillCircle(cx, cy, r);
+        // Bottom half — white (draw over bottom)
+        g.fillStyle(0xffffff, 1);
+        g.fillRect(0, cy, s, cy + 1);
+        // Re-round the bottom
+        g.fillStyle(0xffffff, 1);
+        g.fillCircle(cx, cy, r);
+        // Actually let's do this properly with arcs
+        g.clear();
+
+        // Full red circle
+        g.fillStyle(0xff0000, 1);
+        g.fillCircle(cx, cy, r);
+        // White bottom half
+        g.fillStyle(0xffffff, 1);
+        g.fillRect(1, cy, s - 2, cy);
+        // Clean up bottom corners with the circle
+        g.fillStyle(0x000000, 0);
+        // Black dividing line
+        g.fillStyle(0x222222, 1);
+        g.fillRect(1, cy - 1, s - 2, 3);
+        // Center button
+        g.fillStyle(0xffffff, 1);
+        g.fillCircle(cx, cy, 4);
+        g.lineStyle(2, 0x222222, 1);
+        g.strokeCircle(cx, cy, 4);
+        // Outer border
+        g.lineStyle(1.5, 0x222222, 1);
+        g.strokeCircle(cx, cy, r);
+
+        g.generateTexture('pokeball', s, s);
+        g.destroy();
+    }
+
+    generatePokemonSprites() {
+        // Charmander — orange/red lizard shape
+        const gc = this.add.graphics();
+        const s = 28;
+        // Body
+        gc.fillStyle(0xff6600, 1);
+        gc.fillCircle(14, 16, 10); // body
+        gc.fillCircle(14, 8, 6); // head
+        // Belly
+        gc.fillStyle(0xffcc66, 1);
+        gc.fillCircle(14, 18, 6);
+        // Eyes
+        gc.fillStyle(0x000000, 1);
+        gc.fillCircle(11, 7, 1.5);
+        gc.fillCircle(17, 7, 1.5);
+        // Tail flame
+        gc.fillStyle(0xff4400, 1);
+        gc.fillTriangle(22, 20, 26, 12, 20, 16);
+        gc.fillStyle(0xffaa00, 1);
+        gc.fillTriangle(23, 18, 26, 13, 21, 16);
+        gc.generateTexture('pokemon_charmander', s, s);
+        gc.destroy();
+
+        // Bulbasaur — green/teal with bulb
+        const gb = this.add.graphics();
+        // Body
+        gb.fillStyle(0x44aa88, 1);
+        gb.fillCircle(14, 18, 10); // body
+        gb.fillCircle(14, 10, 6); // head
+        // Bulb on back
+        gb.fillStyle(0x44cc44, 1);
+        gb.fillCircle(14, 14, 7);
+        gb.fillStyle(0x66ee66, 1);
+        gb.fillTriangle(14, 4, 8, 14, 20, 14);
+        // Eyes
+        gb.fillStyle(0xff0000, 1);
+        gb.fillCircle(11, 9, 1.5);
+        gb.fillCircle(17, 9, 1.5);
+        gb.generateTexture('pokemon_bulbasaur', s, s);
+        gb.destroy();
+
+        // Squirtle — blue turtle shape
+        const gs = this.add.graphics();
+        // Shell
+        gs.fillStyle(0x886622, 1);
+        gs.fillCircle(14, 18, 9);
+        gs.fillStyle(0xcc9944, 1);
+        gs.fillCircle(14, 18, 6);
+        // Head
+        gs.fillStyle(0x4488ff, 1);
+        gs.fillCircle(14, 10, 7);
+        // Eyes
+        gs.fillStyle(0x000000, 1);
+        gs.fillCircle(11, 9, 1.5);
+        gs.fillCircle(17, 9, 1.5);
+        // Tail
+        gs.fillStyle(0x4488ff, 1);
+        gs.fillTriangle(22, 22, 26, 18, 20, 18);
+        gs.generateTexture('pokemon_squirtle', s, s);
+        gs.destroy();
+    }
+
+    generatePokemonProjectiles() {
+        // Fire projectile — orange/red flame
+        const gf = this.add.graphics();
+        gf.fillStyle(0xff4400, 1);
+        gf.fillCircle(5, 5, 4);
+        gf.fillStyle(0xffaa00, 1);
+        gf.fillCircle(5, 5, 2);
+        gf.generateTexture('fire_proj', 10, 10);
+        gf.destroy();
+
+        // Leaf projectile — green leaf
+        const gl = this.add.graphics();
+        gl.fillStyle(0x44ff44, 1);
+        gl.fillTriangle(5, 0, 0, 10, 10, 10);
+        gl.fillStyle(0x22cc22, 1);
+        gl.fillRect(4, 3, 2, 6); // stem
+        gl.generateTexture('leaf_proj', 10, 10);
+        gl.destroy();
+
+        // Water projectile — blue droplet
+        const gw = this.add.graphics();
+        gw.fillStyle(0x44aaff, 1);
+        gw.fillCircle(5, 6, 4);
+        gw.fillTriangle(5, 0, 2, 5, 8, 5);
+        gw.fillStyle(0xaaddff, 1);
+        gw.fillCircle(4, 5, 1.5);
+        gw.generateTexture('water_proj', 10, 10);
+        gw.destroy();
     }
 }

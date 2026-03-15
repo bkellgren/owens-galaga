@@ -15,6 +15,7 @@ export class BonusRoundScene extends Phaser.Scene {
         this.diffMod = data.diffMod;
         this.lives = data.lives;
         this.bombs = data.bombs;
+        this.pokeballs = data.pokeballs || 0;
         this.cosmeticTier = data.cosmeticTier || 0;
         this.activePowerups = data.activePowerups || {};
         this.highScore = data.highScore || 0;
@@ -456,6 +457,7 @@ export class BonusRoundScene extends Phaser.Scene {
                 difficulty: this.difficulty,
                 lives: this.lives,
                 bombs: this.bombs,
+                pokeballs: this.pokeballs,
                 cosmeticTier: this.cosmeticTier,
                 activePowerups: this.activePowerups,
                 highScore: this.highScore,

@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import {
     GAME_WIDTH, GAME_HEIGHT, PLAYER, ENEMY_TYPES, POWERUP_TYPES,
-    DIFFICULTY, DIFFICULTY_MODIFIERS, COMBO, POWERUP, BOMB, COLORS
+    DIFFICULTY, DIFFICULTY_MODIFIERS, COMBO, POWERUP, BOMB, COLORS, POKEBALL
 } from '../constants.js';
 import { Player } from '../entities/Player.js';
 import { EnemyFormation } from '../systems/EnemyFormation.js';
@@ -10,6 +10,7 @@ import { HUD } from '../systems/HUD.js';
 import { StarField } from '../systems/StarField.js';
 import { WaveGenerator } from '../systems/WaveGenerator.js';
 import { EnvironmentalHazards } from '../systems/EnvironmentalHazards.js';
+import { PokemonSummon } from '../systems/PokemonSummon.js';
 import { audio } from '../systems/AudioManager.js';
 
 export class GameScene extends Phaser.Scene {
@@ -34,6 +35,7 @@ export class GameScene extends Phaser.Scene {
             this.level = this.initData.level || 1;
             this.lives = this.initData.lives || PLAYER.STARTING_LIVES;
             this.bombs = this.initData.bombs || 0;
+            this.pokeballs = this.initData.pokeballs || 0;
             this.cosmeticTier = this.initData.cosmeticTier || 0;
             this.nextExtraLife = this.initData.nextExtraLife || PLAYER.EXTRA_LIFE_SCORE;
         } else {
@@ -43,6 +45,7 @@ export class GameScene extends Phaser.Scene {
             this.level = 1;
             this.lives = PLAYER.STARTING_LIVES;
             this.bombs = 0;
+            this.pokeballs = 0;
             this.cosmeticTier = 0;
             this.nextExtraLife = PLAYER.EXTRA_LIFE_SCORE;
         }
@@ -97,6 +100,9 @@ export class GameScene extends Phaser.Scene {
         // Environmental Hazards
         this.hazards = new EnvironmentalHazards(this);
 
+        // Pokemon Summon system
+        this.pokemonSummon = new PokemonSummon(this);
+
         // Collisions
         this.physics.add.overlap(this.playerBullets, this.enemies, this.onBulletHitEnemy, null, this);
         this.physics.add.overlap(this.player.shipGroup, this.enemies, this.onEnemyHitPlayer, null, this);
@@ -116,6 +122,8 @@ export class GameScene extends Phaser.Scene {
             B: this.input.keyboard.addKey('B'),
             P: this.input.keyboard.addKey('P'),
             M: this.input.keyboard.addKey('M'),
+            C: this.input.keyboard.addKey('C'),
+            F: this.input.keyboard.addKey('F'),
             ESC: this.input.keyboard.addKey('ESC'),
         };
 
@@ -126,6 +134,16 @@ export class GameScene extends Phaser.Scene {
         // Bomb handler — launch or detonate
         this.keys.X.on('down', () => this.bombAction());
         this.keys.B.on('down', () => this.bombAction());
+
+        // Pokéball handler
+        this.keys.C.on('down', () => {
+            if (!this.paused && !this.gameOver) {
+                this.pokemonSummon.launch();
+            }
+        });
+
+        // Fullscreen toggle
+        this.keys.F.on('down', () => this.scale.toggleFullscreen());
 
         // Mute toggle
         this.keys.M.on('down', () => {
@@ -275,6 +293,9 @@ export class GameScene extends Phaser.Scene {
 
         // Environmental hazards
         this.hazards.update(effectiveDelta);
+
+        // Pokemon summon system
+        this.pokemonSummon.update(time, effectiveDelta);
 
         // Extra life check
         if (this.score >= this.nextExtraLife && this.lives < PLAYER.MAX_LIVES) {
@@ -1159,6 +1180,7 @@ export class GameScene extends Phaser.Scene {
                     diffMod: this.diffMod,
                     lives: this.lives,
                     bombs: this.bombs,
+                    pokeballs: this.pokeballs,
                     cosmeticTier: this.cosmeticTier,
                     activePowerups: this.activePowerups,
                     highScore: this.highScore,
@@ -1218,6 +1240,7 @@ export class GameScene extends Phaser.Scene {
         this.gameOver = true;
         this.player.hide();
         this.hazards.cleanup();
+        this.pokemonSummon.cleanup();
         audio.stopMusic();
         audio.play('game_over');
 

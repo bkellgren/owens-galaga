@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GAME_WIDTH, GAME_HEIGHT, POWERUP_TYPES, POWERUP, BOMB } from '../constants.js';
+import { GAME_WIDTH, GAME_HEIGHT, POWERUP_TYPES, POWERUP, BOMB, POKEBALL } from '../constants.js';
 
 export class PowerupManager {
     constructor(scene) {
@@ -138,6 +138,16 @@ export class PowerupManager {
 
             case 'time_slow':
                 scene.activateTimedPowerup('time_slow', POWERUP_TYPES.TIME_SLOW.duration);
+                break;
+
+            case 'heat_seeking':
+                scene.activateTimedPowerup('heat_seeking', POWERUP_TYPES.HEAT_SEEKING.duration);
+                break;
+
+            case 'pokeball':
+                if (scene.pokeballs < POKEBALL.MAX_COUNT) {
+                    scene.pokeballs++;
+                }
                 break;
         }
     }

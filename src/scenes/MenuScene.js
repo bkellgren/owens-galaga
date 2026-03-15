@@ -83,12 +83,23 @@ export class MenuScene extends Phaser.Scene {
         hsText.on('pointerdown', () => this.showHighScoresOverlay());
 
         // Controls hint
-        this.add.text(GAME_WIDTH / 2, 620, 'ARROWS/WASD: MOVE  |  SPACE: FIRE\nX: BOMB  |  ESC: PAUSE  |  M: MUTE', {
+        this.add.text(GAME_WIDTH / 2, 620, 'ARROWS/WASD: MOVE  |  SPACE: FIRE\nX: BOMB  |  C: POKÉBALL  |  ESC: PAUSE\nM: MUTE  |  F: FULLSCREEN', {
             fontFamily: 'monospace',
             fontSize: '10px',
             color: '#555555',
             align: 'center',
         }).setOrigin(0.5);
+
+        // Fullscreen button
+        const fsBtn = this.add.text(GAME_WIDTH - 16, 16, '⛶', {
+            fontFamily: 'monospace', fontSize: '20px', color: '#555555',
+        }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+        fsBtn.on('pointerover', () => fsBtn.setColor('#ffffff'));
+        fsBtn.on('pointerout', () => fsBtn.setColor('#555555'));
+        fsBtn.on('pointerdown', () => this.scale.toggleFullscreen());
+
+        // F key for fullscreen
+        this.input.keyboard.on('keydown-F', () => this.scale.toggleFullscreen());
 
         // Decorative ship
         const ship = this.add.image(GAME_WIDTH / 2, 350, 'player_ship').setScale(2);

@@ -83,6 +83,11 @@ export class AudioManager {
             case 'tractor_beam': this._tractorBeam(t); break;
             case 'rescue':      this._rescue(t); break;
             case 'pause':       this._pause(t); break;
+            case 'pokeball_throw': this._pokeballThrow(t); break;
+            case 'pokemon_summon': this._pokemonSummon(t); break;
+            case 'pokemon_fire':  this._pokemonFire(t); break;
+            case 'pokemon_leaf':  this._pokemonLeaf(t); break;
+            case 'pokemon_water': this._pokemonWater(t); break;
         }
     }
 
@@ -406,6 +411,83 @@ export class AudioManager {
         osc.connect(gain).connect(this.sfxGain);
         osc.start(t);
         osc.stop(t + 0.1);
+    }
+
+    _pokeballThrow(t) {
+        // Whoosh sound
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(300, t);
+        osc.frequency.exponentialRampToValueAtTime(800, t + 0.15);
+        osc.frequency.exponentialRampToValueAtTime(200, t + 0.3);
+        gain.gain.setValueAtTime(0.12, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+        osc.connect(gain).connect(this.sfxGain);
+        osc.start(t);
+        osc.stop(t + 0.35);
+    }
+
+    _pokemonSummon(t) {
+        // Magical ascending sparkle
+        const notes = [392, 523, 659, 784, 1047]; // G C E G C
+        notes.forEach((freq, i) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.value = freq;
+            const start = t + i * 0.07;
+            gain.gain.setValueAtTime(0.1, start);
+            gain.gain.exponentialRampToValueAtTime(0.001, start + 0.15);
+            osc.connect(gain).connect(this.sfxGain);
+            osc.start(start);
+            osc.stop(start + 0.15);
+        });
+    }
+
+    _pokemonFire(t) {
+        // Crackling fire burst
+        const noise = this._createNoise(0.12);
+        const gain = this.ctx.createGain();
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(3000, t);
+        filter.frequency.exponentialRampToValueAtTime(500, t + 0.12);
+        filter.Q.value = 1;
+        gain.gain.setValueAtTime(0.1, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+        noise.connect(filter).connect(gain).connect(this.sfxGain);
+        noise.start(t);
+        noise.stop(t + 0.15);
+    }
+
+    _pokemonLeaf(t) {
+        // Quick swish
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(1200, t);
+        osc.frequency.exponentialRampToValueAtTime(600, t + 0.08);
+        gain.gain.setValueAtTime(0.08, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+        osc.connect(gain).connect(this.sfxGain);
+        osc.start(t);
+        osc.stop(t + 0.1);
+    }
+
+    _pokemonWater(t) {
+        // Splashy bubble
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(600, t);
+        osc.frequency.exponentialRampToValueAtTime(900, t + 0.06);
+        osc.frequency.exponentialRampToValueAtTime(400, t + 0.12);
+        gain.gain.setValueAtTime(0.1, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+        osc.connect(gain).connect(this.sfxGain);
+        osc.start(t);
+        osc.stop(t + 0.15);
     }
 
     // ─── Noise Helper ─────────────────────────────────────────────

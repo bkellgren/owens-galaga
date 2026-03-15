@@ -41,6 +41,19 @@ export class HUD {
             ...style, color: '#ff4444', fontSize: '12px',
         }).setOrigin(1, 0).setDepth(80);
 
+        // Pokéballs (bottom right, above bombs)
+        this.pokeballText = scene.add.text(GAME_WIDTH - 10, GAME_HEIGHT - 40, '', {
+            ...style, color: '#ff4444', fontSize: '12px',
+        }).setOrigin(1, 0).setDepth(80);
+
+        // Fullscreen button (top right corner)
+        this.fullscreenBtn = scene.add.text(GAME_WIDTH - 10, 42, '⛶', {
+            fontFamily: 'monospace', fontSize: '16px', color: '#555555',
+        }).setOrigin(1, 0).setDepth(80).setInteractive({ useHandCursor: true });
+        this.fullscreenBtn.on('pointerover', () => this.fullscreenBtn.setColor('#ffffff'));
+        this.fullscreenBtn.on('pointerout', () => this.fullscreenBtn.setColor('#555555'));
+        this.fullscreenBtn.on('pointerdown', () => scene.scale.toggleFullscreen());
+
         // Active powerups display — visual bars
         this.powerupBars = [];
         this.powerupBarContainer = { y: GAME_HEIGHT - 80 };
@@ -75,6 +88,10 @@ export class HUD {
         // Bombs
         const bombStr = '💣'.repeat(scene.bombs);
         this.bombTexts.setText(bombStr || '');
+
+        // Pokéballs
+        const pokeStr = scene.pokeballs > 0 ? '🔴'.repeat(scene.pokeballs) : '';
+        this.pokeballText.setText(pokeStr);
 
         // Active powerups — visual timer bars
         // Clean up old bars

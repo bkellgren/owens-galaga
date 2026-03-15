@@ -49,8 +49,22 @@ export class GameOverScene extends Phaser.Scene {
         // High scores
         this.showHighScores();
 
+        // --- Share Score Screenshot button ---
+        const shareBtn = this.add.text(GAME_WIDTH / 2, 555, '📸 SHARE SCORE', {
+            fontFamily: 'monospace', fontSize: '14px', color: '#00ffff',
+        }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+
+        shareBtn.on('pointerover', () => shareBtn.setColor('#ffffff'));
+        shareBtn.on('pointerout', () => shareBtn.setColor('#00ffff'));
+        shareBtn.on('pointerdown', () => this.shareScore());
+
+        // Share status text (hidden until used)
+        this.shareStatus = this.add.text(GAME_WIDTH / 2, 578, '', {
+            fontFamily: 'monospace', fontSize: '10px', color: '#44ff44',
+        }).setOrigin(0.5);
+
         // Restart prompt
-        const restartText = this.add.text(GAME_WIDTH / 2, 600, 'PRESS ENTER TO PLAY AGAIN', {
+        const restartText = this.add.text(GAME_WIDTH / 2, 610, 'PRESS ENTER TO PLAY AGAIN', {
             fontFamily: 'monospace', fontSize: '16px', color: '#ffffff',
         }).setOrigin(0.5);
 
@@ -62,7 +76,7 @@ export class GameOverScene extends Phaser.Scene {
             repeat: -1,
         });
 
-        this.add.text(GAME_WIDTH / 2, 640, 'ESC FOR MENU', {
+        this.add.text(GAME_WIDTH / 2, 650, 'ESC FOR MENU', {
             fontFamily: 'monospace', fontSize: '12px', color: '#555555',
         }).setOrigin(0.5);
 
@@ -152,5 +166,63 @@ export class GameOverScene extends Phaser.Scene {
                 });
             }
         } catch { /* ignore */ }
+    }
+
+    async shareScore() {
+        try {
+            this.shareStatus.setText('Capturing...');
+
+            // Capture the canvas as an image
+            const canvas = this.game.canvas;
+            const dataUrl = canvas.toDataURL('image/png');
+
+            // Try Web Share API first (mobile-friendly)
+            if (navigator.share && navigator.canShare) {
+                const blob = await (await fetch(dataUrl)).blob();
+                const file = new File([blob], 'owens-galaga-score.png', { type: 'image/png' });
+
+                if (navigator.canShare({ files: [file] })) {
+                    await navigator.share({
+                        title: "Owen's Galaga Score",
+                        text: `I scored ${this.finalScore.toLocaleString()} on Level ${this.finalLevel} in Owen's Galaga! (${DIFFICULTY_MODIFIERS[this.difficulty].label} mode)`,
+                        files: [file],
+                    });
+                    this.shareStatus.setText('Shared!');
+                    return;
+                }
+            }
+
+            // Fallback: try clipboard
+            if (navigator.clipboard && window.ClipboardItem) {
+                const blob = await (await fetch(dataUrl)).blob();
+                try {
+                    await navigator.clipboard.write([
+                        new window.ClipboardItem({ 'image/png': blob })
+                    ]);
+                    this.shareStatus.setText('Screenshot copied to clipboard!');
+                    return;
+                } catch {
+                    // Clipboard write failed, fall through to download
+                }
+            }
+
+            // Final fallback: download the image
+            const link = document.createElement('a');
+            link.download = `owens-galaga-${this.finalScore}-lvl${this.finalLevel}.png`;
+            link.href = dataUrl;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            this.shareStatus.setText('Screenshot downloaded!');
+
+        } catch (err) {
+            console.warn('Share failed:', err);
+            this.shareStatus.setText('Could not share - try again');
+        }
+
+        // Clear status after 3 seconds
+        this.time.delayedCall(3000, () => {
+            if (this.shareStatus) this.shareStatus.setText('');
+        });
     }
 }

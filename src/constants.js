@@ -122,12 +122,21 @@ export const POWERUP_TYPES = {
     SPEED_BOOST: { key: 'speed_boost', weight: 10, duration: 10000, color: 0xffff00, label: 'SPD' },
     MULTI_SHIP: { key: 'multi_ship', weight: 5, duration: 0, color: 0xff00ff, label: 'MULTI' },
     TIME_SLOW: { key: 'time_slow', weight: 5, duration: 5000, color: 0x8888ff, label: 'SLOW' },
+    HEAT_SEEKING: { key: 'heat_seeking', weight: 8, duration: 12000, color: 0xff3300, label: 'HEAT' },
+    POKEBALL: { key: 'pokeball', weight: 8, duration: 0, color: 0xff0000, label: 'POKE' },
 };
 
 export const BOMB = {
     MAX_COUNT: 3,
     BLAST_RADIUS_PCT: 0.5, // 50% of screen width
     BOSS_DAMAGE_PCT: 0.27, // ~27% of boss max HP
+};
+
+export const POKEBALL = {
+    MAX_COUNT: 2,
+    SUMMON_DURATION: 5000, // 5 seconds
+    ATTACK_RATE: 250, // ms between attacks (4 per second)
+    DAMAGE: 1,
 };
 
 export const COMBO = {
